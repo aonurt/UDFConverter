@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 
-# LibreOffice'i (PDF çeviri için) yükle
+# LibreOffice ve Java Kurulumu (PDF çevirisi için)
 RUN apt-get update && apt-get install -y \
     libreoffice \
     default-jre \
@@ -14,5 +14,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Uygulamayı başlat
-CMD ["gunicorn", "-b", "0.0.0.0:10000", "app:app"]
+# DEĞİŞİKLİK BURADA: --timeout 120 ekledik (İşlem süresini 30 saniyeden 2 dakikaya çıkardık)
+CMD ["gunicorn", "--timeout", "120", "-b", "0.0.0.0:10000", "app:app"]
