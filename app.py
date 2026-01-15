@@ -144,7 +144,7 @@ def generate_word_doc(udf_dosya_objesi):
     except Exception as e:
         return None, str(e)
 
-# --- ARAYÜZ ---
+# --- ROUTES ---
 @app.route('/')
 def anasayfa():
     return f'''
@@ -152,19 +152,15 @@ def anasayfa():
     <html lang="tr">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>UDF Dönüştürücü</title>
         <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: transparent; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; flex-direction: column; }}
-            .card {{ background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); text-align: center; width: 450px; max-width: 90%; position: relative; }}
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: transparent; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
+            .card {{ background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); text-align: center; width: 450px; max-width: 90%; }}
             .logo-img {{ max-width: 200px; margin-bottom: 20px; }}
-            
-            /* Dosya Yükleme */
+            h2 {{ display: none; }}
             .file-upload {{ position: relative; display: inline-block; width: 100%; margin-bottom: 25px; }}
             input[type=file] {{ border: 2px dashed #ccc; padding: 20px; width: 88%; border-radius: 8px; background: #f0f0f0; color: #555; cursor: pointer; transition: 0.3s; }}
             input[type=file]:hover {{ border-color: #999; background: #e9e9e9; }}
-            
-            /* Butonlar */
             .btn-group {{ display: flex; gap: 15px; margin-bottom: 20px; }}
             .btn {{ flex: 1; padding: 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 600; color: white; transition: transform 0.1s, opacity 0.2s; }}
             .btn:active {{ transform: scale(0.98); }}
@@ -172,36 +168,14 @@ def anasayfa():
             .btn-pdf {{ background-color: #d32f2f; }}
             .btn:hover {{ opacity: 0.9; }}
             .btn:disabled {{ background-color: #999; cursor: not-allowed; }}
-
-            /* Progress Bar */
             .progress-container {{ display: none; width: 100%; background-color: #d0d0d0; border-radius: 4px; margin: 20px 0; overflow: hidden; }}
             .progress-bar {{ width: 0%; height: 10px; background-color: #666; transition: width 0.4s ease; }}
             .loader-text {{ font-size: 13px; color: #777; margin-top: 5px; display: none; }}
-            
-            /* Sonuç Alanı */
             .result-area {{ display: none; margin-top: 20px; padding: 20px; background: #e0e0e0; border-radius: 8px; border: 1px solid #ccc; }}
             .success-msg {{ color: #333; font-weight: bold; font-size: 18px; margin-bottom: 15px; display: block; }}
             .download-link {{ display: inline-block; text-decoration: none; background: #333; color: white; padding: 12px 25px; border-radius: 5px; font-weight: bold; transition: 0.2s; }}
             .download-link:hover {{ background: #000; }}
             .reset-link {{ cursor:pointer; color:#666; text-decoration:underline; margin-top: 15px; display: inline-block; }}
-
-            /* YENİ: Uygulama Yükle Butonu */
-            .install-trigger {{ margin-top: 30px; background: transparent; border: 1px solid #ddd; color: #666; padding: 10px 20px; border-radius: 25px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }}
-            .install-trigger:hover {{ background: #f5f5f5; color: #333; border-color: #bbb; }}
-            
-            /* Modal Penceresi */
-            .modal-overlay {{ display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }}
-            .modal {{ background: white; padding: 30px; border-radius: 15px; width: 320px; text-align: center; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: popUp 0.3s ease; }}
-            @keyframes popUp {{ from {{transform: scale(0.8); opacity: 0;}} to {{transform: scale(1); opacity: 1;}} }}
-            
-            .modal h3 {{ margin-top: 0; color: #222; font-size: 18px; margin-bottom: 15px; }}
-            .modal p {{ font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 20px; }}
-            .modal-icon {{ font-size: 40px; margin-bottom: 15px; display: block; }}
-            
-            .modal-close {{ position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; color: #aaa; line-height: 1; }}
-            .modal-close:hover {{ color: #333; }}
-            
-            .modal-btn {{ background: #333; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; }}
         </style>
     </head>
     <body>
@@ -209,39 +183,20 @@ def anasayfa():
             <img src="{LOGO_URL}" alt="Logo" class="logo-img">
             <form id="uploadForm">
                 <div class="file-upload"><input type="file" id="fileInput" name="dosya" required accept=".udf"></div>
-                
                 <div class="btn-group" id="btnGroup">
                     <button type="button" class="btn btn-word" onclick="startConversion('word')">Dönüştür: WORD</button>
                     <button type="button" class="btn btn-pdf" onclick="startConversion('pdf')">Dönüştür: PDF</button>
                 </div>
-
                 <div class="progress-container" id="progressContainer"><div class="progress-bar" id="progressBar"></div></div>
                 <div class="loader-text" id="loaderText">Dosya işleniyor, lütfen bekleyin...</div>
-
                 <div class="result-area" id="resultArea">
                     <span class="success-msg">Dönüştürme Tamamlandı!</span>
                     <a href="#" id="downloadBtn" class="download-link">Dosyayı İndir</a><br>
                     <small class="reset-link" onclick="resetForm()">Yeni Dosya Çevir</small>
                 </div>
             </form>
-
-            <button class="install-trigger" onclick="showInstallGuide()">
-                📲 Uygulamayı Ana Ekrana Ekle
-            </button>
         </div>
-
-        <div class="modal-overlay" id="installModal">
-            <div class="modal">
-                <span class="modal-close" onclick="closeModal()">&times;</span>
-                <span class="modal-icon" id="modalIcon">📱</span>
-                <h3 id="modalTitle">Nasıl Eklenir?</h3>
-                <p id="modalDesc">Tarayıcı ayarlarından ekleyebilirsiniz.</p>
-                <button class="modal-btn" onclick="closeModal()">Anladım</button>
-            </div>
-        </div>
-
         <script>
-            // --- CONVERSION LOGIC ---
             function startConversion(type) {{
                 var fileInput = document.getElementById('fileInput');
                 if (fileInput.files.length === 0) {{ alert("Lütfen önce bir UDF dosyası seçin."); return; }}
@@ -279,44 +234,6 @@ def anasayfa():
                 document.getElementById('progressBar').style.width = '0%';
                 document.getElementById('fileInput').value = "";
             }}
-
-            // --- INSTALL GUIDE LOGIC ---
-            function showInstallGuide() {{
-                var modal = document.getElementById('installModal');
-                var title = document.getElementById('modalTitle');
-                var desc = document.getElementById('modalDesc');
-                var icon = document.getElementById('modalIcon');
-                var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-                modal.style.display = 'flex';
-
-                if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {{
-                    // iOS
-                    icon.innerHTML = "🍏";
-                    title.innerText = "iPhone'a Ekleme";
-                    desc.innerHTML = "1. Tarayıcının en altındaki <b>'Paylaş'</b> simgesine dokunun.<br><br>2. Aşağı kaydırıp <b>'Ana Ekrana Ekle'</b> seçeneğine basın.";
-                }} else if (/android/i.test(userAgent)) {{
-                    // Android
-                    icon.innerHTML = "🤖";
-                    title.innerText = "Android'e Ekleme";
-                    desc.innerHTML = "1. Tarayıcının sağ üstündeki <b>'Üç Nokta'</b> menüsüne dokunun.<br><br>2. <b>'Uygulamayı Yükle'</b> veya <b>'Ana Ekrana Ekle'</b> seçeneğine basın.";
-                }} else {{
-                    // Desktop
-                    icon.innerHTML = "💻";
-                    title.innerText = "Masaüstüne Ekleme";
-                    desc.innerHTML = "Tarayıcınızın menüsünden (Genelde adres çubuğunun sağında) <b>'Kısayol Oluştur'</b> veya <b>'Uygulamayı Yükle'</b> diyerek masaüstünüze ekleyebilirsiniz.";
-                }}
-            }}
-
-            function closeModal() {{
-                document.getElementById('installModal').style.display = 'none';
-            }}
-            
-            window.onclick = function(event) {{
-                if (event.target == document.getElementById('installModal')) {{
-                    closeModal();
-                }}
-            }}
         </script>
     </body>
     </html>
@@ -339,15 +256,22 @@ def indir_pdf():
     dosya = request.files['dosya']
     doc, hata = generate_word_doc(dosya)
     if hata: return str(hata), 500
+    
     unique_id = str(uuid.uuid4())
     temp_docx = f"temp_{unique_id}.docx"
     temp_pdf = f"temp_{unique_id}.pdf"
+    
     try:
         doc.save(temp_docx)
+        # LINUX/RENDER UYUMLU PDF ÇEVİRME (LibreOffice)
         subprocess.run(['libreoffice', '--headless', '--invisible', '--convert-to', 'pdf', '--outdir', os.getcwd(), temp_docx], check=True)
-        if os.path.exists(temp_pdf): return send_file(temp_pdf, as_attachment=True, download_name='converted.pdf', mimetype='application/pdf')
-        else: return "PDF oluşturulamadı", 500
-    except Exception as e: return f"Sunucu Hatası: {str(e)}", 500
+        
+        if os.path.exists(temp_pdf):
+            return send_file(temp_pdf, as_attachment=True, download_name='converted.pdf', mimetype='application/pdf')
+        else:
+            return "PDF oluşturulamadı", 500
+    except Exception as e:
+        return f"Sunucu Hatası: {str(e)}", 500
     finally:
         if os.path.exists(temp_docx): os.remove(temp_docx)
         if os.path.exists(temp_pdf): os.remove(temp_pdf)
